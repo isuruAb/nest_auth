@@ -56,15 +56,55 @@ export class AuthService {
 
   async login(user: any) {
     try {
-      if (!user || !user.username || !user.id) {
-        throw new HttpException('Invalid user data', HttpStatus.UNAUTHORIZED);
-      }
       const payload = { username: user.username, sub: user.id };
+
+      //  access token
+      const accessToken = this.jwtService.sign(payload, {
+        expiresIn: '60s',
+      });
+
+      //  refresh token
+      const refreshToken = this.jwtService.sign(payload, {
+        expiresIn: '7d',
+      });
+
       return {
-        access_token: this.jwtService.sign(payload),
+        access_token: accessToken,
+        refresh_token: refreshToken,
       };
     } catch (error) {
-      throw new HttpException('Login failed', HttpStatus.INTERNAL_SERVER_ERROR);
+      console.error('Error during login:', error);
+
+      if (error.name === 'JsonWebTokenError') {
+        throw new HttpException(
+          'Invalid token signature',
+          HttpStatus.UNAUTHORIZED,
+        );
+      } else if (error.name === 'TokenExpiredError') {
+        throw new HttpException('Token has expired', HttpStatus.UNAUTHORIZED);
+      } else {
+        throw new HttpException(
+          'Failed to generate authentication tokens',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+  }
+  async refresh(refreshToken: string): Promise<string> {
+    try {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_SECRET || 'secretKey',
+      });
+
+      // If valid, create and return a new access token
+      const newAccessToken = this.jwtService.sign(
+        { username: payload.username, sub: payload.sub },
+        { expiresIn: process.env.JWT_AUTHENTICATION_TOKEN_DURATION || '60s' },
+      );
+
+      return { access_token: newAccessToken };
+    } catch (e) {
+      throw new HttpException('Invalid refresh token', HttpStatus.UNAUTHORIZED);
     }
   }
 }
