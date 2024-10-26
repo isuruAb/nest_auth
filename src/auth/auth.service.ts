@@ -90,7 +90,7 @@ export class AuthService {
       }
     }
   }
-  async refresh(refreshToken: string): Promise<string> {
+  async refresh(refreshToken: string): Promise<any> {
     try {
       const payload = this.jwtService.verify(refreshToken, {
         secret: process.env.JWT_SECRET || 'secretKey',

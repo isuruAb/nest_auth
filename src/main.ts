@@ -7,6 +7,6 @@ async function bootstrap() {
   const userService = app.get(UserService);
 
   await userService.createDummyUser();
-  await app.listen(3000);
+  await app.listen(3001);
 }
 bootstrap();
