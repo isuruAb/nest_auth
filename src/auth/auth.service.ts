@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -90,21 +90,17 @@ export class AuthService {
       }
     }
   }
-  async refresh(refreshToken: string): Promise<any> {
+  async refreshAccessToken(refreshToken: string) {
     try {
-      const payload = this.jwtService.verify(refreshToken, {
-        secret: process.env.JWT_SECRET || 'secretKey',
-      });
+      // Validate refresh token
+      const payload = this.jwtService.verify(refreshToken);
 
-      // If valid, create and return a new access token
-      const newAccessToken = this.jwtService.sign(
-        { username: payload.username, sub: payload.sub },
-        { expiresIn: process.env.JWT_AUTHENTICATION_TOKEN_DURATION || '60s' },
-      );
+      // Generate a new access token based on the user ID from the payload
+      const newAccessToken = this.jwtService.sign({ userId: payload.userId });
 
-      return { access_token: newAccessToken };
-    } catch (e) {
-      throw new HttpException('Invalid refresh token', HttpStatus.UNAUTHORIZED);
+      return newAccessToken;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid refresh token');
     }
   }
 }
