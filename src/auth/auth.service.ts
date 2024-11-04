@@ -1,4 +1,9 @@
-import { Injectable, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -96,7 +101,10 @@ export class AuthService {
       const payload = this.jwtService.verify(refreshToken);
 
       // Generate a new access token based on the user ID from the payload
-      const newAccessToken = this.jwtService.sign({ userId: payload.userId });
+      const newAccessToken = this.jwtService.sign({
+        username: payload.username,
+        sub: payload.sub,
+      });
 
       return newAccessToken;
     } catch (error) {

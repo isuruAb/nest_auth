@@ -40,10 +40,6 @@ export class AuthController {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
-  //   @Post('refresh')
-  //   async refresh(@Body('refresh_token') refreshToken: string) {
-  //     return this.authService.refresh();
-  //   }
 
   @Post('register')
   async register(@Body() body: { username: string; password: string }) {
@@ -65,6 +61,18 @@ export class AuthController {
     });
 
     return res.status(HttpStatus.OK).json({ access_token });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  logout(@Request() req, @Res() res) {
+    res.cookie('refresh_token', '', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      maxAge: 0,
+    });
+    return res.status(HttpStatus.OK).json(req.user);
   }
 
   @UseGuards(JwtAuthGuard)
